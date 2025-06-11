@@ -1,0 +1,124 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { SITE_TITLE, SITE_DESCRIPTION, SITE_AUTHOR } from "../consts";
+
+export const prerender = false;
+
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`About | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+    <style>
+      .about-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+
+      .profile-section {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 3rem;
+        align-items: flex-start;
+      }
+
+      .profile-image {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: var(--box-shadow);
+      }
+
+      .profile-content h1 {
+        margin-top: 0;
+      }
+
+      .bio-section {
+        margin-bottom: 2rem;
+      }
+
+      .skills-section {
+        margin-bottom: 2rem;
+      }
+
+      .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .skill-tag {
+        background-color: rgba(var(--gray-light), 70%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 768px) {
+        .profile-section {
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+
+        .profile-image {
+          width: 150px;
+          height: 150px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div class="about-container">
+        <section class="profile-section">
+          <img
+            src="/tom_avatar.jpeg"
+            alt={SITE_AUTHOR}
+            class="profile-image"
+          />
+          <div class="profile-content">
+            <h1>关于我</h1>
+            <p>
+              你好! 我是 {SITE_AUTHOR}。
+            </p>
+            <p>
+              我写不出啥东西来，因为还没啥值得说的经历。我写博客的初衷是记录一些自己的思考，分享一些知识，同时最是期盼遇见同频的人。
+            </p>
+          </div>
+        </section>
+
+        <section class="bio-section">
+          <h2>我的故事</h2>
+          <p>
+            空荡荡的...
+          </p>
+          <p>
+            ...
+          </p>
+          <p>
+            ...
+          </p>
+        </section>
+
+        <section class="skills-section">
+          <h2>关键词</h2>
+          <div class="skills-list">
+            <span class="skill-tag">AI算法研究员</span>
+            <span class="skill-tag">全栈工程师</span>
+            <span class="skill-tag">商业分析</span>
+            <span class="skill-tag">喜欢酷的东西</span>
+            <span class="skill-tag">想有自己的实业</span>
+          </div>
+        </section>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

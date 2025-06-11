@@ -1,0 +1,21 @@
+-- 创建用户表
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    username TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建评论表
+CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    author TEXT NOT NULL,
+    content TEXT NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    likes INTEGER DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id); 

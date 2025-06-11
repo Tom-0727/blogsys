@@ -1,0 +1,27 @@
+{
+  "description": "This template is designed for creating a blog using the Astro framework. It includes minimal styling, SEO-friendly features, and support for Markdown and MDX content. The template is optimized for performance and includes features like sitemap and RSS feed support. The `src/pages/index.astro` is the home page and modify it according to user's requirements.",
+  "required_fields": [
+    "title",
+    "description",
+    "author",
+    "keywords"
+  ],
+  "required_files": [
+    "README.md",
+    "src/components/Header.astro",
+    "src/components/Footer.astro",
+    "src/layouts/BlogPost.astro",
+    "src/pages/index.astro",
+    "src/pages/blog/index.astro",
+    "src/content/blog/first-post.md",
+    "src/content/blog/using-mdx.md",
+    "src/styles/global.css",
+    "astro.config.mjs",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "lang": "JavaScript",
+  "framework": "Astro",
+  "style": "astro",
+  "scene": "Content Building Tool Template"
+}

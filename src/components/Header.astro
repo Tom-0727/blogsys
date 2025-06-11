@@ -1,0 +1,73 @@
+---
+import HeaderLink from './HeaderLink.astro';
+import { SITE_TITLE } from '../consts';
+import LoginButton from './LoginButton.astro';
+
+export const prerender = false;
+---
+
+<header>
+	<nav>
+		<h2><a href="/">{SITE_TITLE}</a></h2>
+		<div class="internal-links">
+			<HeaderLink href="/">Home</HeaderLink>
+			<HeaderLink href="/blog">Blog</HeaderLink>
+			<HeaderLink href="/about">About</HeaderLink>
+			<HeaderLink href="/contact">Contact</HeaderLink>
+		</div>
+		<div class="right-section">
+			<LoginButton />
+		</div>
+	</nav>
+</header>
+<style>
+	header {
+		margin: 0;
+		padding: 0 1em;
+		background: white;
+		box-shadow: 0 2px 8px rgba(var(--black), 5%);
+	}
+	h2 {
+		margin: 0;
+		font-size: 1em;
+	}
+
+	h2 a,
+	h2 a.active {
+		text-decoration: none;
+	}
+	nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1rem 0;
+	}
+	nav a {
+		padding: 1em 0.5em;
+		color: var(--black);
+		border-bottom: 4px solid transparent;
+		text-decoration: none;
+	}
+	nav a.active {
+		text-decoration: none;
+		border-bottom-color: var(--accent);
+	}
+	
+	.right-section {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+	}
+	
+	@media (max-width: 720px) {
+		nav {
+			flex-direction: column;
+			gap: 1rem;
+		}
+		
+		.internal-links, .right-section {
+			width: 100%;
+			justify-content: center;
+		}
+	}
+</style>

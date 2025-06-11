@@ -1,0 +1,260 @@
+---
+// src/pages/blog/category/[category].astro - Dynamic category page
+// Category-specific page to display posts by category
+import BaseHead from '../../../components/BaseHead.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import FormattedDate from '../../../components/FormattedDate.astro';
+import { SITE_TITLE } from '../../../consts';
+import { getPostsByCategory, getAllCategories } from '../../../utils/categoryUtils';
+import { getCollection } from 'astro:content';
+
+export const prerender = false;
+
+export async function getStaticPaths() {
+  const categories = await getAllCategories();
+  
+  return categories.map((category) => ({
+    params: { category: category.slug },
+    props: { categoryName: category.name }
+  }));
+}
+
+const { category } = Astro.params;
+const { categoryName } = Astro.props;
+
+// Get posts for this category
+const posts = await getPostsByCategory(category || 'all');
+
+// Get all categories for the sidebar
+const allCategories = await getAllCategories();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`${categoryName} | ${SITE_TITLE}`} description={`Articles about ${categoryName}`} />
+    <style>
+      .category-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+      
+      .category-header {
+        grid-column: 1 / -1;
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+      
+      .category-title {
+        font-size: 2.5rem;
+        margin: 0;
+      }
+      
+      .category-description {
+        color: rgb(var(--gray));
+        margin-top: 0.5rem;
+      }
+      
+      .post-count {
+        display: inline-block;
+        background-color: rgba(var(--gray-light), 70%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.9rem;
+        margin-top: 1rem;
+      }
+      
+      .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+      }
+      
+      .post-card {
+        border: 1px solid rgba(var(--gray-light), 100%);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+        background-color: white;
+      }
+      
+      .post-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--box-shadow);
+      }
+      
+      .post-image {
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+      }
+      
+      .post-content {
+        padding: 1.5rem;
+      }
+      
+      .post-title {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.3rem;
+      }
+      
+      .post-date {
+        color: rgb(var(--gray));
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+      }
+      
+      .post-excerpt {
+        color: rgb(var(--gray-dark));
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+      }
+      
+      .read-more {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      
+      .read-more:hover {
+        color: var(--accent-dark);
+      }
+      
+      /* Categories Footer Styles */
+      .categories-footer {
+        margin-top: 2rem;
+        padding: 1rem;
+        background-color: rgba(var(--gray-light), 15%);
+        border-radius: 8px;
+        text-align: center;
+      }
+      
+      .footer-title {
+        margin-top: 0;
+        font-size: 0.95rem;
+        color: rgb(var(--gray-dark));
+        margin-bottom: 0.75rem;
+      }
+      
+      .categories-compact-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+      
+      .category-pill {
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 0.25rem 0.5rem;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        text-decoration: none;
+        color: rgb(var(--gray-dark));
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(var(--gray), 15%);
+      }
+      
+      .category-pill:hover {
+        background-color: rgba(var(--accent), 0.1);
+        color: var(--accent);
+      }
+      
+      .category-pill.active {
+        background-color: var(--accent);
+        color: white;
+      }
+      
+      .no-posts {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+        background-color: white;
+        border-radius: 8px;
+        border: 1px dashed rgba(var(--gray), 30%);
+      }
+
+      .post-image-placeholder {
+				width: 100%;
+				height: 4px;
+				background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+			}
+      
+      @media (max-width: 900px) {
+        .posts-grid {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div class="category-container">
+        <div class="category-header">
+          <h1 class="category-title">{categoryName}</h1>
+          <p class="category-description">Explore all articles related to {categoryName}</p>
+          <div class="post-count">{posts.length} article{posts.length !== 1 ? 's' : ''}</div>
+        </div>
+        
+        {posts.length === 0 ? (
+          <div class="no-posts">
+            <h2>No articles found</h2>
+            <p>There are no articles in this category yet. Check back later!</p>
+          </div>
+        ) : (
+          <div class="posts-grid">
+            {posts.map(post => (
+              <article class="post-card">
+                <a href={`/blog/${post.slug}/`}>
+                  <div class="post-image-placeholder"></div>
+                </a>
+                <div class="post-content">
+                  <h2 class="post-title">
+                    <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
+                  </h2>
+                  <div class="post-date">
+                    <FormattedDate date={post.data.pubDate} />
+                  </div>
+                  <p class="post-excerpt">{post.data.description}</p>
+                  <a href={`/blog/${post.slug}/`} class="read-more">
+                    Read more
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+        
+        <footer class="categories-footer">
+          <h3 class="footer-title">Browse other categories</h3>
+          <div class="categories-compact-list">
+            {allCategories.filter(cat => cat.name !== "All Posts").map(cat => (
+              <a 
+                href={`/blog/category/${cat.slug}`} 
+                class={`category-pill ${cat.slug === category ? 'active' : ''}`}
+              >
+                {cat.name}
+              </a>
+            ))}
+          </div>
+        </footer>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

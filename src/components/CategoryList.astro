@@ -1,0 +1,121 @@
+---
+// src/components/CategoryList.astro - Component for displaying blog categories
+import { getAllCategories } from '../utils/categoryUtils';
+
+interface Props {
+  currentCategory?: string; // Current active category (optional)
+  showPostCount?: boolean;  // Whether to show post counts beside categories
+  horizontal?: boolean;     // Display horizontally or vertically
+}
+
+const { currentCategory = '', showPostCount = true, horizontal = false } = Astro.props;
+
+// Get all blog categories with counts
+const categories = await getAllCategories();
+---
+
+<div class={`category-list ${horizontal ? 'horizontal' : 'vertical'}`}>
+  <h3 class="category-list-title">Categories</h3>
+  <ul class="categories">
+    {categories.map(category => (
+      <li class="category-item">
+        <a 
+          href={category.slug === 'all-posts' 
+            ? '/blog/' 
+            : `/blog/category/${category.slug}`}
+          class={`category-link ${currentCategory === category.slug ? 'active' : ''}`}
+          aria-current={currentCategory === category.slug ? 'page' : undefined}
+        >
+          <span class="category-name">{category.name}</span>
+          {showPostCount && (
+            <span class="category-count">{category.count}</span>
+          )}
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .category-list {
+    margin-bottom: 2rem;
+  }
+
+  .category-list-title {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: rgb(var(--gray-dark));
+  }
+
+  .categories {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Vertical layout (default) */
+  .vertical .category-item {
+    margin-bottom: 0.5rem;
+  }
+
+  .vertical .category-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+  }
+
+  /* Horizontal layout */
+  .horizontal .categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .horizontal .category-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    background-color: rgba(var(--gray-light), 70%);
+  }
+
+  .horizontal .category-count {
+    background-color: rgba(var(--gray), 15%);
+  }
+
+  /* Common styles */
+  .category-link {
+    text-decoration: none;
+    color: rgb(var(--gray-dark));
+    transition: all 0.2s;
+  }
+
+  .category-link:hover {
+    background-color: rgba(var(--gray-light), 70%);
+    color: var(--accent);
+  }
+
+  .category-link.active {
+    background-color: rgba(var(--accent), 0.1);
+    color: var(--accent);
+    font-weight: bold;
+  }
+
+  .category-count {
+    background-color: rgba(var(--gray-light), 80%);
+    color: rgb(var(--gray-dark));
+    border-radius: 20px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+
+  .category-link.active .category-count {
+    background-color: var(--accent);
+    color: white;
+  }
+</style>

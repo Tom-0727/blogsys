@@ -1,0 +1,346 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+import { getCollection } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import { getAllCategories } from '../../utils/categoryUtils';
+
+export const prerender = false;
+
+// Get all blog posts
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+// Get all categories for navigation
+const allCategories = await getAllCategories();
+
+// Calculate column distribution for waterfall layout
+function getColumnIndex(index: number, numColumns: number): number {
+  return index % numColumns;
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <BaseHead title={`Blog | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+    <style>
+      main {
+        width: 100%;
+        max-width: 1200px;
+        padding: 2rem 1rem;
+      }
+      
+      .blog-header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+      
+      .blog-header h1 {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .blog-header p {
+        color: rgb(var(--gray));
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto;
+      }
+      
+      .categories-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        justify-content: center;
+      }
+      
+      .category-tag {
+        background-color: rgb(var(--gray-light));
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        text-decoration: none;
+        color: rgb(var(--gray-dark));
+        transition: background-color 0.2s, color 0.2s;
+      }
+      
+      .category-tag:hover,
+      .category-tag.active {
+        background-color: var(--accent);
+        color: white;
+      }
+      
+      /* Waterfall Layout */
+      .waterfall-layout {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 2rem;
+      }
+      
+      .waterfall-column {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+      
+      .post-card {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(var(--gray), 15%);
+        background-color: white;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        break-inside: avoid;
+      }
+      
+      .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--box-shadow);
+      }
+      
+      .post-card a {
+        text-decoration: none;
+        color: inherit;
+      }
+      
+      .post-image-container {
+        position: relative;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+      }
+      
+      .post-content {
+        padding: 1.5rem;
+      }
+      
+      .post-title {
+        margin: 0;
+        font-size: 1.4rem;
+        line-height: 1.3;
+        margin-bottom: 0.5rem;
+        color: rgb(var(--black));
+      }
+      
+      .post-date {
+        display: block;
+        margin-bottom: 1rem;
+        color: rgb(var(--gray));
+        font-size: 0.9rem;
+      }
+      
+      .post-excerpt {
+        color: rgb(var(--gray-dark));
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+      }
+      
+      .post-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+      
+      .post-category {
+        background-color: rgba(var(--gray-light), 0.7);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: rgb(var(--gray-dark));
+      }
+
+      .post-image-placeholder {
+				width: 100%;
+				height: 4px;
+				background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+			}
+      
+      .read-more {
+        display: inline-block;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+      }
+      
+      .read-more:hover {
+        text-decoration: underline;
+      }
+
+      /* Featured Post */
+      .featured-post {
+        grid-column: 1 / -1;
+        margin-bottom: 2rem;
+      }
+      
+      .featured-post .post-card {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .featured-post .post-image-container {
+        height: 100%;
+      }
+      
+      .featured-post .post-image {
+        height: 100%;
+      }
+      
+      .featured-post .post-content {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      
+      .featured-post .post-title {
+        font-size: 1.8rem;
+      }
+      
+      .featured-tag {
+        background-color: var(--accent);
+        color: white;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        display: inline-block;
+        margin-bottom: 1rem;
+      }
+      
+      /* Responsive adjustments */
+      @media (max-width: 900px) {
+        .waterfall-layout {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .featured-post .post-card {
+          grid-template-columns: 1fr;
+        }
+        
+        .featured-post .post-image-container {
+          height: 300px;
+        }
+      }
+      
+      @media (max-width: 600px) {
+        .waterfall-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <Header />
+    <main>
+      <section class="blog-header">
+        <h1>Tom 的博客空间</h1>
+        <p>
+          欢迎来到我的博客空间！在这里我会分享一些我的思考，知识，以及一些有趣的东西。你可以按类别浏览，或者滚动浏览所有文章。
+        </p>
+      </section>
+      
+      <div class="categories-nav">
+        <a href="/blog" class="category-tag active">All Posts</a>
+        {allCategories.filter(category => category.name !== "All Posts").map(category => (
+          <a href={`/blog/category/${category.slug}`} class="category-tag">
+            {category.name} {category.count ? `(${category.count})` : ''}
+          </a>
+        ))}
+      </div>
+      
+      <div class="blog-content">
+        {posts.length > 0 ? (
+          <>
+            {/* Featured Post (first/latest post) */}
+            {posts.length > 0 && (
+              <div class="featured-post">
+                <article class="post-card">
+                  <a href={`/blog/${posts[0].slug}/`}>
+                    <div class="post-image-container">
+                      <img 
+                        src={posts[0].data.heroImage || '/blog-placeholder-1.jpg'} 
+                        alt="" 
+                        class="post-image"
+                      />
+                    </div>
+                  </a>
+                  <div class="post-content">
+                    <span class="featured-tag">Featured</span>
+                    <a href={`/blog/${posts[0].slug}/`}>
+                      <h2 class="post-title">{posts[0].data.title}</h2>
+                      <span class="post-date">
+                        <FormattedDate date={posts[0].data.pubDate} />
+                      </span>
+                      {posts[0].data.description && (
+                        <p class="post-excerpt">{posts[0].data.description}</p>
+                      )}
+                      <span class="read-more">Read More →</span>
+                    </a>
+                    <div class="post-categories">
+                      {posts[0].data.categories?.map(category => (
+                        <span class="post-category">{category}</span>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              </div>
+            )}
+
+            {/* Waterfall Layout for remaining posts */}
+            <div class="waterfall-layout">
+              {/* Create three columns for the waterfall layout */}
+              {[0, 1, 2].map(columnIndex => (
+                <div class="waterfall-column">
+                  {posts
+                    .slice(1) /* Skip the featured post */
+                    .filter((_, index) => getColumnIndex(index, 3) === columnIndex)
+                    .map(post => (
+                      <article class="post-card">
+                        <a href={`/blog/${post.slug}/`}>
+                          <div class="post-image-placeholder"></div>
+                          <div class="post-content">
+                            <h2 class="post-title">{post.data.title}</h2>
+                            <span class="post-date">
+                              <FormattedDate date={post.data.pubDate} />
+                            </span>
+                            {post.data.description && (
+                              <p class="post-excerpt">{post.data.description}</p>
+                            )}
+                            <span class="read-more">Read More →</span>
+                            <div class="post-categories">
+                              {post.data.categories?.map(category => (
+                                <span class="post-category">{category}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </a>
+                      </article>
+                    ))
+                  }
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style="text-align: center; padding: 5rem 1rem;">
+            <h2>No blog posts found</h2>
+            <p>Check back later for new content!</p>
+          </div>
+        )}
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

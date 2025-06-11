@@ -1,0 +1,381 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+
+export const prerender = false;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={`注册 | ${SITE_TITLE}`} description={`加入 ${SITE_TITLE} 社区`} />
+    <style>
+      .signup-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+
+      .signup-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: var(--box-shadow);
+        border: 1px solid rgba(var(--gray-light), 100%);
+      }
+
+      .signup-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .signup-header h1 {
+        margin: 0 0 0.5rem 0;
+        color: rgb(var(--gray-dark));
+        font-size: 1.8rem;
+      }
+
+      .signup-header p {
+        margin: 0;
+        color: rgb(var(--gray));
+        font-size: 1rem;
+      }
+
+      .signup-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .form-group label {
+        font-size: 0.9rem;
+        color: rgb(var(--gray-dark));
+        font-weight: 500;
+      }
+
+      .form-group input {
+        padding: 0.75rem;
+        border: 2px solid rgba(var(--gray), 20%);
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(var(--accent), 0.1);
+      }
+
+      .form-group input:invalid {
+        border-color: #e53935;
+      }
+
+      .signup-submit {
+        padding: 0.75rem;
+        background-color: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+
+      .signup-submit:hover {
+        background-color: var(--accent-dark);
+      }
+
+      .signup-submit:active {
+        transform: translateY(1px);
+      }
+
+      .signup-submit:disabled {
+        background-color: rgba(var(--gray), 40%);
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .login-prompt {
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: rgb(var(--gray));
+        padding-top: 2rem;
+        border-top: 1px solid rgba(var(--gray-light), 50%);
+      }
+
+      .login-prompt a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .login-prompt a:hover {
+        text-decoration: underline;
+      }
+
+      .error-message {
+        color: #e53935;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        display: none;
+      }
+
+      .success-message {
+        color: #4caf50;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .signup-container {
+          padding: 1rem;
+        }
+
+        .signup-card {
+          padding: 1.5rem;
+        }
+
+        .signup-header h1 {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div class="signup-container">
+        <div class="signup-card">
+          <div class="signup-header">
+            <h1>创建账户</h1>
+            <p>加入 {SITE_TITLE} 社区，参与讨论和分享</p>
+          </div>
+          
+          <form class="signup-form" id="signup-form">
+            <div class="form-group">
+              <label for="username">用户名</label>
+              <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                required 
+                minlength="2"
+                maxlength="20"
+                placeholder="请输入用户名" 
+              />
+              <div class="error-message" id="username-error"></div>
+            </div>
+            
+                         <div class="form-group">
+               <label for="signup-email">邮箱</label>
+               <input 
+                 type="email" 
+                 id="signup-email" 
+                 name="email" 
+                 required 
+                 placeholder="请输入邮箱地址" 
+               />
+               <div class="error-message" id="signup-email-error"></div>
+             </div>
+            
+                         <div class="form-group">
+               <label for="signup-password">密码</label>
+               <input 
+                 type="password" 
+                 id="signup-password" 
+                 name="password" 
+                 required 
+                 placeholder="请输入密码" 
+               />
+               <div class="error-message" id="signup-password-error"></div>
+             </div>
+            
+                         <div class="form-group">
+               <label for="signup-confirm-password">确认密码</label>
+               <input 
+                 type="password" 
+                 id="signup-confirm-password" 
+                 name="confirm-password" 
+                 required 
+                 placeholder="请再次输入密码" 
+               />
+               <div class="error-message" id="signup-confirm-password-error"></div>
+             </div>
+            
+            <div class="error-message" id="form-error"></div>
+            <div class="success-message" id="form-success"></div>
+            
+            <button type="submit" class="signup-submit" id="signup-btn">
+              创建账户
+            </button>
+          </form>
+          
+          <div class="login-prompt">
+            已有账户？<a href="/">返回首页登录</a>
+          </div>
+        </div>
+      </div>
+    </main>
+    <Footer />
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const signupForm = document.getElementById('signup-form') as HTMLFormElement;
+        const signupBtn = document.getElementById('signup-btn') as HTMLButtonElement;
+        const usernameInput = document.getElementById('username') as HTMLInputElement;
+        const emailInput = document.getElementById('signup-email') as HTMLInputElement;
+        const passwordInput = document.getElementById('signup-password') as HTMLInputElement;
+        const confirmPasswordInput = document.getElementById('signup-confirm-password') as HTMLInputElement;
+        
+        // 错误信息元素
+        const usernameError = document.getElementById('username-error') as HTMLDivElement;
+        const emailError = document.getElementById('signup-email-error') as HTMLDivElement;
+        const passwordError = document.getElementById('signup-password-error') as HTMLDivElement;
+        const confirmPasswordError = document.getElementById('signup-confirm-password-error') as HTMLDivElement;
+        const formError = document.getElementById('form-error') as HTMLDivElement;
+        const formSuccess = document.getElementById('form-success') as HTMLDivElement;
+        
+        // 清除错误信息
+        function clearErrors() {
+          [usernameError, emailError, passwordError, confirmPasswordError, formError, formSuccess].forEach(el => {
+            el.style.display = 'none';
+            el.textContent = '';
+          });
+        }
+        
+        // 显示错误信息
+        function showError(element, message) {
+          element.textContent = message;
+          element.style.display = 'block';
+        }
+        
+        // 实时用户名验证
+        let usernameCheckTimeout: ReturnType<typeof setTimeout>;
+        usernameInput.addEventListener('input', () => {
+          clearTimeout(usernameCheckTimeout);
+          const username = usernameInput.value.trim();
+          
+          if (username.length === 0) {
+            usernameError.style.display = 'none';
+            return;
+          }
+          
+          if (username.length < 2 || username.length > 20) {
+            showError(usernameError, '用户名长度需要在2-20个字符之间');
+            return;
+          }
+          
+          // 延迟验证避免频繁请求
+          usernameCheckTimeout = setTimeout(async () => {
+            try {
+              const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
+              const data = await response.json();
+              
+              if (response.ok) {
+                if (data.available) {
+                  usernameError.style.display = 'none';
+                } else {
+                  showError(usernameError, data.message);
+                }
+              }
+            } catch (error) {
+              console.error('Username check error:', error);
+            }
+          }, 500);
+        });
+
+        // 实时密码确认验证
+        confirmPasswordInput.addEventListener('input', () => {
+          if (confirmPasswordInput.value && passwordInput.value !== confirmPasswordInput.value) {
+            showError(confirmPasswordError, '两次输入的密码不一致');
+          } else {
+            confirmPasswordError.style.display = 'none';
+          }
+        });
+        
+        // 表单提交处理
+        signupForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          clearErrors();
+          
+          const username = usernameInput.value.trim();
+          const email = emailInput.value.trim();
+          const password = passwordInput.value;
+          const confirmPassword = confirmPasswordInput.value;
+          
+          // 前端验证
+          let hasError = false;
+          
+          if (username.length < 2 || username.length > 20) {
+            showError(usernameError, '用户名长度需要在2-20个字符之间');
+            hasError = true;
+          }
+          
+          
+          
+          if (password !== confirmPassword) {
+            showError(confirmPasswordError, '两次输入的密码不一致');
+            hasError = true;
+          }
+          
+          if (hasError) return;
+          
+          // 禁用提交按钮
+          signupBtn.disabled = true;
+          signupBtn.textContent = '注册中...';
+          
+          try {
+            const response = await fetch('/api/auth/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                username,
+                email,
+                password,
+              }),
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+              // 注册成功
+              showError(formSuccess, '注册成功！正在跳转...');
+              formSuccess.style.display = 'block';
+              formSuccess.style.color = '#4caf50';
+              
+              // 延迟跳转到首页
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 1500);
+            } else {
+              // 显示服务器返回的错误信息
+              showError(formError, data.error || '注册失败，请重试');
+            }
+          } catch (error) {
+            console.error('Signup error:', error);
+            showError(formError, '网络错误，请重试');
+          } finally {
+            // 恢复提交按钮
+            signupBtn.disabled = false;
+            signupBtn.textContent = '创建账户';
+          }
+        });
+      });
+    </script>
+  </body>
+</html> 

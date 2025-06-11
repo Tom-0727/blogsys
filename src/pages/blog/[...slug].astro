@@ -1,0 +1,27 @@
+---
+// src/pages/blog/[...slug].astro - Dynamic route handler for blog posts
+import { type CollectionEntry, getCollection } from 'astro:content';
+import BlogPost from '../../layouts/BlogPost.astro';
+
+export const prerender = false;
+
+// 动态获取博客文章
+const { slug } = Astro.params;
+const posts = await getCollection('blog');
+const post = posts.find(p => p.slug === slug);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+// Get rendered content and headings for table of contents
+const { Content, headings } = await post.render();
+---
+
+<BlogPost 
+  {...post.data}
+  slug={post.slug}
+  headings={headings}
+>
+  <Content />
+</BlogPost>

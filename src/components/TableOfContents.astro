@@ -1,0 +1,205 @@
+---
+// src/components/TableOfContents.astro - Component for displaying table of contents
+export interface Props {
+  headings: {
+    depth: number;
+    slug: string;
+    text: string;
+  }[];
+}
+
+// Convert headings to hierarchical structure
+const { headings } = Astro.props;
+
+// Filter out any headings with a depth lower than 2 (h1 is usually the post title)
+const filteredHeadings = headings.filter(heading => heading.depth >= 2);
+
+// Group headings by their depth for hierarchical display
+type Heading = {
+  depth: number;
+  slug: string;
+  text: string;
+  subheadings?: Heading[];
+};
+
+function buildTOC(headings: Heading[]): Heading[] {
+  const toc: Heading[] = [];
+  const parentHeadings: Record<number, Heading> = {};
+
+  headings.forEach(heading => {
+    const { depth } = heading;
+    
+    if (depth === 2) {
+      // Top level heading
+      const newHeading = { ...heading, subheadings: [] };
+      parentHeadings[2] = newHeading;
+      toc.push(newHeading);
+    } else {
+      // Subheading - find its parent
+      const parentDepth = depth - 1;
+      let currentParent = parentHeadings[parentDepth];
+      
+      if (currentParent) {
+        // Create new heading with empty subheadings array
+        const newHeading = { ...heading, subheadings: [] };
+        // Add to parent's subheadings
+        if (!currentParent.subheadings) {
+          currentParent.subheadings = [];
+        }
+        currentParent.subheadings.push(newHeading);
+        // This heading might be a parent to future headings
+        parentHeadings[depth] = newHeading;
+      }
+    }
+  });
+
+  return toc;
+}
+
+const tableOfContents = buildTOC(filteredHeadings);
+---
+
+<nav class="toc">
+  <h2 class="toc-heading">Table of Contents</h2>
+  
+  {tableOfContents.length > 0 ? (
+    <ul class="toc-list">
+      {tableOfContents.map(heading => (
+        <li class="toc-item">
+          <a href={`#${heading.slug}`} class="toc-link">{heading.text}</a>
+          
+          {heading.subheadings && heading.subheadings.length > 0 && (
+            <ul class="toc-sublist">
+              {heading.subheadings.map(subheading => (
+                <li class="toc-subitem">
+                  <a href={`#${subheading.slug}`} class="toc-link toc-sublink">
+                    {subheading.text}
+                  </a>
+                  
+                  {subheading.subheadings && subheading.subheadings.length > 0 && (
+                    <ul class="toc-sublist">
+                      {subheading.subheadings.map(subsubheading => (
+                        <li class="toc-subitem">
+                          <a href={`#${subsubheading.slug}`} class="toc-link toc-subsublink">
+                            {subsubheading.text}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p class="toc-empty">No headings found in this article.</p>
+  )}
+</nav>
+
+<style>
+  .toc {
+    font-size: 0.95rem;
+  }
+  
+  .toc-heading {
+    font-size: 1.3rem;
+    margin: 0 0 1rem 0;
+  }
+  
+  .toc-list, .toc-sublist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .toc-sublist {
+    padding-left: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .toc-item {
+    margin-bottom: 0.75rem;
+  }
+  
+  .toc-subitem {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .toc-link {
+    color: rgb(var(--gray-dark));
+    text-decoration: none;
+    display: inline-block;
+    transition: color 0.2s;
+    padding: 0.2rem 0;
+  }
+  
+  .toc-link:hover {
+    color: #D2691E;  /* 棕橙色 */
+  }
+  
+  .toc-link.active {
+    color: #D2691E;  /* 棕橙色 */
+    font-weight: bold;
+  }
+  
+  .toc-sublink {
+    color: rgb(var(--gray));
+  }
+  
+  .toc-sublink:hover {
+    color: #D2691E;  /* 棕橙色 */
+  }
+  
+  .toc-sublink.active {
+    color: #D2691E;  /* 棕橙色 */
+    font-weight: bold;
+  }
+  
+  .toc-subsublink {
+    font-size: 0.85rem;
+  }
+  
+  .toc-empty {
+    color: rgb(var(--gray));
+    font-style: italic;
+  }
+  
+  /* Collapsible TOC for mobile */
+  @media (max-width: 720px) {
+    .toc-heading {
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .toc-heading::after {
+      content: " ▼";
+      font-size: 0.8rem;
+    }
+    
+    .toc.collapsed .toc-heading::after {
+      content: " ▶";
+    }
+    
+    .toc.collapsed .toc-list {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Make TOC collapsible on mobile
+  document.addEventListener('DOMContentLoaded', () => {
+    const tocHeading = document.querySelector('.toc-heading');
+    const toc = document.querySelector('.toc');
+    
+    if (window.innerWidth <= 720) {
+      tocHeading?.addEventListener('click', () => {
+        toc?.classList.toggle('collapsed');
+      });
+    }
+  });
+</script>

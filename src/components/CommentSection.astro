@@ -1,0 +1,467 @@
+---
+import jwt from 'jsonwebtoken';
+
+export const prerender = false;
+
+const { postId } = Astro.props;
+
+// 检查登录状态
+let isLoggedIn = false;
+let currentUser: { id: number; email: string; username: string } | null = null;
+
+try {
+  const token = Astro.cookies.get('token')?.value;
+  if (token) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    if (decoded && decoded.userId) {
+      isLoggedIn = true;
+      currentUser = {
+        id: decoded.userId,
+        email: decoded.email,
+        username: decoded.username || decoded.email.split('@')[0]
+      };
+    }
+  }
+} catch (error) {
+  // Token 无效或过期
+  isLoggedIn = false;
+  currentUser = null;
+}
+---
+
+<section class="comments-section" data-post-id={postId} data-user-logged-in={isLoggedIn} data-username={currentUser?.username || 'momo'}>
+  <h4 class="comments-title">Discussion (<span id="comment-count">0</span>)</h4>
+
+  <form class="comment-form" id="comment-form">
+    <div class="form-fields">
+      <div class="form-group">
+        <label for="comment-content">你的想法</label>
+        <textarea
+          id="comment-content"
+          name="content"
+          rows="3"
+          placeholder="Write your thoughts here..."
+          required
+        ></textarea>
+      </div>
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div class="comments-list" id="comments-list">
+    <!-- Comments will be dynamically inserted here via JavaScript -->
+  </div>
+
+  <div class="pagination" id="pagination-container">
+    <!-- Pagination buttons will be dynamically inserted here via JavaScript -->
+  </div>
+
+  <script is:inline>
+    const commentSection = document.querySelector('.comments-section');
+    
+    const postId = commentSection.dataset.postId;
+    const isLoggedIn = commentSection.dataset.userLoggedIn === 'true';
+    const username = commentSection.dataset.username;
+    let currentPage = 1;
+    const commentsPerPage = 5;
+    let totalComments = 0;
+
+    async function fetchComments(page = 1) {
+      try {
+        const response = await fetch(`/api/comments?postId=${postId}&page=${page}&perPage=${commentsPerPage}`);
+        if (!response.ok) throw new Error('Failed to fetch comments');
+        const data = await response.json();
+        totalComments = data.total;
+        return data.comments;
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+        return [];
+      }
+    }
+
+    async function addComment(content) {
+      try {
+        const response = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postId,
+            author: username, // 使用从服务器端获取的用户名
+            content
+          })
+        });
+        if (!response.ok) throw new Error('Failed to add comment');
+        return true;
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        return false;
+      }
+    }
+
+    async function likeComment(commentId) {
+      try {
+        const response = await fetch('/api/comments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ commentId })
+        });
+        if (!response.ok) throw new Error('Failed to like comment');
+        return true;
+      } catch (error) {
+        console.error('Error liking comment:', error);
+        return false;
+      }
+      // TODO: mock 数据，后端API已实现
+      // return true; // 直接返回成功
+    }
+
+    function renderPagination() {
+      const totalPages = Math.ceil(totalComments / commentsPerPage);
+      const pagination = document.getElementById('pagination-container');
+      if (!pagination) return;
+      pagination.innerHTML = '';
+
+      // 首页按钮
+      const firstBtn = document.createElement('button');
+      firstBtn.textContent = '1';
+      firstBtn.disabled = currentPage === 1;
+      if (currentPage === 1) firstBtn.classList.add('active-page');
+      firstBtn.addEventListener('click', () => goToPage(1));
+      pagination.appendChild(firstBtn);
+
+      // 动态页码按钮（如 1 2 3）
+      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        if (i === currentPage) {
+          pageBtn.classList.add('active-page');
+          pageBtn.disabled = true;
+        }
+        pageBtn.addEventListener('click', () => goToPage(i));
+        pagination.appendChild(pageBtn);
+      }
+
+      // 如果总页数大于1，且当前不是最后一页，显示最后一页按钮
+      if (totalPages > 1) {
+        const lastBtn = document.createElement('button');
+        lastBtn.textContent = totalPages;
+        lastBtn.disabled = currentPage === totalPages;
+        if (currentPage === totalPages) lastBtn.classList.add('active-page');
+        lastBtn.addEventListener('click', () => goToPage(totalPages));
+        if (totalPages > 3 && currentPage < totalPages - 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.textContent = '...';
+          ellipsis.style.margin = '0 0.5em';
+          pagination.appendChild(ellipsis);
+        }
+        if (totalPages > 1 && currentPage < totalPages) {
+          pagination.appendChild(lastBtn);
+        }
+      }
+
+      // 跳转输入框
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = 1;
+      input.max = totalPages;
+      input.value = currentPage;
+      input.style.width = '3em';
+      input.style.marginLeft = '1em';
+      input.style.textAlign = 'center';
+      input.title = '输入页码';
+      pagination.appendChild(input);
+
+      const jumpBtn = document.createElement('button');
+      jumpBtn.textContent = '跳转';
+      jumpBtn.style.marginLeft = '0.5em';
+      pagination.appendChild(jumpBtn);
+
+      // 错误提示
+      let errorSpan = document.getElementById('pagination-error');
+      if (!errorSpan) {
+        errorSpan = document.createElement('span');
+        errorSpan.id = 'pagination-error';
+        errorSpan.style.color = 'red';
+        errorSpan.style.marginLeft = '0.5em';
+        pagination.appendChild(errorSpan);
+      }
+      errorSpan.textContent = '';
+
+      jumpBtn.addEventListener('click', () => {
+        const val = parseInt(input.value, 10);
+        if (isNaN(val) || val < 1 || val > totalPages) {
+          errorSpan.textContent = `请输入1到${totalPages}之间的页码`;
+        } else {
+          errorSpan.textContent = '';
+          goToPage(val);
+        }
+      });
+
+      // 总页数显示
+      const totalSpan = document.createElement('span');
+      totalSpan.textContent = `共${totalPages}页`;
+      totalSpan.style.marginLeft = '1em';
+      pagination.appendChild(totalSpan);
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      fetchComments(currentPage).then(renderComments);
+    }
+
+    function renderComments(comments) {
+      const commentCount = document.getElementById('comment-count');
+      if (commentCount) commentCount.textContent = totalComments;
+      const commentsList = document.getElementById('comments-list');
+      if (commentsList) {
+        commentsList.innerHTML = comments.length > 0 ? comments.map(comment => `
+          <div class="comment">
+            <div class="comment-header">
+              <div class="comment-meta">
+                <span class="comment-author">${comment.author}</span>
+                <span class="comment-date">
+                  ${new Date(comment.date).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </span>
+              </div>
+            </div>
+            <div class="comment-content">
+              ${comment.content}
+            </div>
+            <div class="comment-actions">
+              <button 
+                class="comment-like" 
+                data-comment-id="${comment.id}"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span>${comment.likes}</span>
+              </button>
+            </div>
+          </div>
+        `).join('') : '<div class="no-comments">Be the first to comment!</div>';
+      }
+      renderPagination();
+    }
+
+    async function init() {
+      // 移除init内部的postId定义（使用外部统一的postId）
+      const comments = await fetchComments(currentPage);
+      renderComments(comments);
+      
+      // 处理表单提交
+      const commentForm = document.getElementById('comment-form');
+      if (commentForm) {
+        commentForm.addEventListener('submit', async (e) => {
+          e.preventDefault(); // 阻止表单默认提交行为
+          const formData = new FormData(e.target);
+          const content = formData.get('content');
+          
+          if (content) {
+            const success = await addComment(content);
+            if (success) {
+              const comments = await fetchComments(currentPage);
+              renderComments(comments);
+              e.target.reset();
+              // 保持当前滚动位置
+              const scrollPosition = window.scrollY;
+              window.scrollTo(0, scrollPosition);
+            }
+          }
+        });
+      }
+
+      // 处理点赞
+      const commentsList = document.getElementById('comments-list');
+      if (commentsList) {
+        commentsList.addEventListener('click', async (e) => {
+          const likeButton = e.target.closest('.comment-like');
+          if (likeButton) {
+            const commentId = likeButton.dataset.commentId;
+            const success = await likeComment(commentId);
+            if (success) {
+              const comments = await fetchComments(currentPage);
+              renderComments(comments);
+            }
+          }
+        });
+      }
+    }
+
+    // 初始化
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+
+  <style>
+    .comments-section {
+      width: calc(100% - 2em);
+      max-width: 100%;
+      margin: 2rem auto;
+      padding: 0 1em;
+    }
+
+    .comment-form {
+      margin-bottom: 2rem;
+      background-color: #f9f9f9;
+      padding: 1.5rem;
+      border-radius: 8px;
+    }
+
+    .form-fields {
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+    }
+
+    button[type="submit"] {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+
+    button[type="submit"]:hover {
+      background-color: var(--accent-dark);
+    }
+
+    .comments-list {
+      margin-top: 2rem;
+    }
+
+    .comment {
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      background-color: white;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .comment-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .comment-date {
+      font-size: 0.875rem;
+      color: rgb(var(--gray));
+    }
+
+    .comment-content {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .comment-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .comment-like {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .comment-like:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .comment-like.liked {
+      background-color: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .no-comments {
+      text-align: center;
+      padding: 2rem;
+      color: rgb(var(--gray));
+      font-style: italic;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .active-page {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .pagination button {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pagination button:hover:not([disabled]) {
+      background-color: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</section>

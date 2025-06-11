@@ -1,0 +1,308 @@
+---
+// src/layouts/BlogPost.astro - Enhanced blog post layout with comment section and TOC
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import CommentSection from '../components/CommentSection.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import { getRelatedPosts } from '../utils/categoryUtils';
+
+export const prerender = false;
+
+// Define the props type that comes from blog collection
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  heroImage?: string;
+  categories?: string[];
+  slug: string;
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+// Get all props
+const { 
+  title, 
+  description, 
+  pubDate, 
+  updatedDate, 
+  heroImage, 
+  categories = [], 
+  slug,
+  headings
+} = Astro.props;
+
+// Get related posts if there are categories
+let relatedPosts: any[] = [];
+if (categories.length > 0) {
+  relatedPosts = await getRelatedPosts(slug, categories, 3);
+}
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} />
+    <style>
+      .blog-container {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 2rem;
+        align-items: start;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      
+      .toc-container {
+        position: sticky;
+        top: 2rem;
+        max-height: calc(100vh - 4rem);
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(var(--gray-light), 100%);
+      }
+
+      main {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+      }
+
+      .hero-image {
+        width: 100%;
+      }
+
+      .hero-image img {
+        display: block;
+        margin: 0 auto;
+        border-radius: 12px;
+        box-shadow: var(--box-shadow);
+      }
+
+      .prose {
+        width: 720px;
+        max-width: 100%;
+        margin: auto;
+        padding: 1em;
+        color: rgb(var(--gray-dark));
+      }
+
+      .title {
+        margin-bottom: 1em;
+        padding: 1em 0;
+        text-align: center;
+        line-height: 1;
+      }
+
+      .title h1 {
+        margin: 0 0 0.5em 0;
+      }
+
+      .date {
+        margin-bottom: 0.5em;
+        color: rgb(var(--gray));
+      }
+
+      .last-updated-on {
+        font-size: 0.8rem;
+        font-style: italic;
+      }
+
+      .categories-container {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin: 1rem 0;
+      }
+
+      .article-footer {
+        margin-top: 3rem;
+        padding-top: 2rem;
+      }
+
+      .related-posts {
+        width: calc(100% - 2em);
+        max-width: 100%;
+        margin: 2rem auto;
+        padding: 0 1em;
+      }
+
+      .related-posts h4 {
+        margin-bottom: 1rem;
+      }
+
+      .related-posts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .related-post {
+        border-bottom: 1px solid rgba(var(--gray-light), 100%);
+        padding-bottom: 1rem;
+      }
+
+      .related-post:last-child {
+        border-bottom: none;
+      }
+
+      .related-post a {
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .related-post-content {
+        flex: 1;
+      }
+
+      .related-post-title {
+        font-size: 1rem;
+        margin: 0 0 0.25rem 0;
+        color: rgb(var(--gray-dark));
+      }
+
+      .related-post-date {
+        color: rgb(var(--gray));
+        font-size: 0.8rem;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 900px) {
+        .blog-container {
+          grid-template-columns: 1fr;
+        }
+
+        .toc-container {
+          position: relative;
+          top: 0;
+          order: -1;
+          margin-bottom: 2rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <Header />
+    <main>
+      <article>
+        <div class="hero-image">
+          {heroImage && <img width={760} height={510} src={heroImage} alt={title} />}
+          <div class="title">
+            <div class="date">
+              <FormattedDate date={pubDate} />
+              {
+                updatedDate && (
+                  <div class="last-updated-on">
+                    Last updated on <FormattedDate date={updatedDate} />
+                  </div>
+                )
+              }
+            </div>
+            <hr />
+          </div>
+        </div>
+        
+        <div class="blog-container">
+          {/* Table of Contents sidebar */}
+          {headings.length > 0 && (
+            <div class="toc-container">
+              <TableOfContents headings={headings} />
+            </div>
+          )}
+          <div class="prose">
+            <!-- Actual blog content from Markdown -->
+            <slot />
+            <div class="article-footer">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Comments Section -->
+        <CommentSection postId={slug} />
+
+        {relatedPosts.length > 0 && (
+          <div class="related-posts">
+            <h4>相关文章</h4>
+            <div class="related-posts-list">
+              {relatedPosts.map(post => (
+                <div class="related-post">
+                  <a href={`/blog/${post.slug}/`}>
+                    <div class="related-post-content">
+                      <h4 class="related-post-title">{post.data.title}</h4>
+                      <span class="related-post-date">
+                        <FormattedDate date={post.data.pubDate} />
+                      </span>
+                    </div>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+      </article>
+    </main>
+    <Footer />
+    
+    <script>
+      // Highlight the current section in the table of contents as you scroll
+      document.addEventListener('DOMContentLoaded', () => {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            const id = entry.target.getAttribute('id');
+            if (entry.intersectionRatio > 0) {
+              // 移除所有活动链接的样式
+              document.querySelectorAll('.toc-link').forEach(link => {
+                link.classList.remove('active');
+                const parent = link.parentElement;
+                if (parent) {
+                  parent.classList.remove('active');
+                }
+              });
+              
+              // 添加当前活动链接的样式
+              const activeLink = document.querySelector(`.toc-link[href="#${id}"]`);
+              if (activeLink) {
+                activeLink.classList.add('active');
+                const parent = activeLink.parentElement;
+                if (parent) {
+                  parent.classList.add('active');
+                }
+                
+                // 确保活动链接在视图中可见
+                const tocContainer = document.querySelector('.toc-container');
+                if (tocContainer) {
+                  const linkRect = activeLink.getBoundingClientRect();
+                  const containerRect = tocContainer.getBoundingClientRect();
+                  
+                  if (linkRect.top < containerRect.top) {
+                    tocContainer.scrollTop += linkRect.top - containerRect.top;
+                  } else if (linkRect.bottom > containerRect.bottom) {
+                    tocContainer.scrollTop += linkRect.bottom - containerRect.bottom;
+                  }
+                }
+              }
+            }
+          });
+        }, { 
+          rootMargin: '-20% 0px -70% 0px',
+          threshold: 0
+        });
+
+        // 跟踪所有带有ID的标题
+        document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').forEach(heading => {
+          observer.observe(heading);
+        });
+      });
+    </script>
+  </body>
+</html>

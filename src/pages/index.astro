@@ -1,0 +1,509 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { getCollection } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+import { getAllCategories } from '../utils/categoryUtils';
+import Layout from '../layouts/BlogPost.astro';
+
+export const prerender = false;
+
+// Get latest posts for the featured section
+const posts = (await getCollection('blog'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 4);
+
+// Get all categories
+const categories = await getAllCategories();
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			/* Hero section styles */
+			.hero-section {
+				position: relative;
+				padding: 6rem 1rem;
+				background-color: #aa6c1b;
+				background-image: linear-gradient(to bottom, rgba(var(--gray-light), 0.7), rgba(255, 255, 255, 0.9));
+				text-align: center;
+				margin-bottom: 2rem;
+				overflow: hidden;
+			}
+
+			.hero-pattern {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-image: radial-gradient(rgba(var(--gray), 0.1) 1px, transparent 1px);
+				background-size: 20px 20px;
+				z-index: -1;
+			}
+
+			.hero-content {
+				max-width: 800px;
+				margin: 0 auto;
+				position: relative;
+				z-index: 2;
+			}
+
+			.hero-title {
+				font-size: 3.5rem;
+				margin-bottom: 1rem;
+				line-height: 1.2;
+			}
+
+			.hero-subtitle {
+				font-size: 1.5rem;
+				color: rgb(var(--gray));
+				margin-bottom: 2rem;
+			}
+
+			.hero-buttons {
+				display: flex;
+				gap: 1rem;
+				justify-content: center;
+				margin-top: 2rem;
+			}
+
+			.hero-btn {
+				display: inline-block;
+				padding: 1rem 2rem;
+				border-radius: 4px;
+				font-weight: 700;
+				font-size: 1.1rem;
+				text-decoration: none;
+				transition: transform 0.2s, box-shadow 0.2s;
+			}
+
+			.hero-btn:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px rgba(var(--gray), 25%);
+			}
+
+			.btn-primary {
+				background-color: var(--accent);
+				color: white;
+			}
+
+			.btn-secondary {
+				background-color: white;
+				color: var(--accent);
+				border: 2px solid var(--accent);
+			}
+
+			/* Featured posts section */
+			.section-title {
+				font-size: 2rem;
+				margin: 3rem 0 2rem;
+				text-align: center;
+			}
+
+			.section-subtitle {
+				text-align: center;
+				margin-top: -1rem;
+				margin-bottom: 2rem;
+				color: rgb(var(--gray));
+			}
+
+			.featured-posts {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+				gap: 2rem;
+				margin-bottom: 3rem;
+			}
+
+			.post-card {
+				border-radius: 8px;
+				overflow: hidden;
+				box-shadow: 0 4px 6px rgba(var(--gray), 15%);
+				background-color: white;
+				transition: transform 0.2s ease, box-shadow 0.2s ease;
+			}
+
+			.post-card:hover {
+				transform: translateY(-5px);
+				box-shadow: var(--box-shadow);
+			}
+
+			.post-card a {
+				text-decoration: none;
+				color: inherit;
+			}
+
+			.post-image {
+				width: 100%;
+				height: 200px;
+				object-fit: cover;
+			}
+
+			.post-content {
+				padding: 1.5rem;
+			}
+
+			.post-title {
+				margin: 0;
+				font-size: 1.4rem;
+				line-height: 1.3;
+				margin-bottom: 0.5rem;
+				color: rgb(var(--black));
+			}
+
+			.post-date {
+				display: block;
+				margin-bottom: 1rem;
+				color: rgb(var(--gray));
+				font-size: 0.9rem;
+			}
+
+			.post-excerpt {
+				color: rgb(var(--gray-dark));
+				margin-bottom: 1rem;
+				font-size: 0.95rem;
+				line-height: 1.5;
+				overflow: hidden;
+				display: -webkit-box;
+				-webkit-line-clamp: 3;
+				-webkit-box-orient: vertical;
+			}
+
+			.read-more {
+				display: inline-block;
+				color: var(--accent);
+				text-decoration: none;
+				font-weight: bold;
+				font-size: 0.95rem;
+			}
+
+			.read-more:hover {
+				text-decoration: underline;
+			}
+
+			.view-all {
+				display: block;
+				margin: 2rem auto;
+				padding: 0.75rem 1.5rem;
+				background-color: white;
+				border: 2px solid var(--accent);
+				color: var(--accent);
+				text-align: center;
+				border-radius: 4px;
+				font-weight: bold;
+				text-decoration: none;
+				width: fit-content;
+				transition: background-color 0.2s, color 0.2s;
+			}
+
+			.view-all:hover {
+				background-color: var(--accent);
+				color: white;
+			}
+
+			/* Categories section */
+			.categories-section {
+				padding: 4rem 1rem;
+				background-color: rgba(var(--gray-light), 0.3);
+				margin: 4rem 0;
+			}
+
+			.categories-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+				gap: 1.5rem;
+				margin-top: 2rem;
+			}
+
+			.category-card {
+				background-color: white;
+				border-radius: 8px;
+				padding: 1.5rem;
+				text-align: center;
+				box-shadow: 0 2px 4px rgba(var(--gray), 10%);
+				transition: transform 0.2s, box-shadow 0.2s;
+			}
+
+			.category-card:hover {
+				transform: translateY(-5px);
+				box-shadow: 0 10px 20px rgba(var(--gray), 20%);
+			}
+
+			.category-icon {
+				font-size: 2rem;
+				margin-bottom: 1rem;
+			}
+
+			.category-name {
+				font-size: 1.2rem;
+				font-weight: bold;
+				margin-bottom: 0.5rem;
+			}
+
+			.category-count {
+				color: rgb(var(--gray));
+				font-size: 0.9rem;
+			}
+
+			/* About me teaser section */
+			.about-teaser {
+				max-width: 900px;
+				margin: 0 auto 4rem auto;
+				padding: 2rem 1rem;
+			}
+
+			.about-image {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				border-radius: 10px;
+				overflow: hidden;
+				box-shadow: var(--box-shadow);
+			}
+
+			.about-image img {
+				width: 100%;
+				height: auto;
+				border-radius: 16px;
+				box-shadow: var(--box-shadow);
+				object-fit: contain;
+			}
+
+			.about-title {
+				font-size: 2rem;
+				font-weight: bold;
+				margin-bottom: 2rem;
+				text-align: left; /* 或center */
+			}
+
+			.about-main {
+				display: grid;
+				grid-template-columns: 1fr 3fr; /* 左1份，右2份 */
+				align-items: center;
+				gap: 2.5rem;
+				margin-bottom: 2rem;
+			}
+
+			.about-desc {
+				flex: 1;
+				font-size: 1rem;
+				opacity: 0.9;
+			}
+
+			.about-bottom {
+				opacity: 0.8;
+				margin-top: 2rem;
+				font-size: 1.1rem;
+				text-align: left; /* 或center */
+			}
+
+			/* Newsletter section */
+			.newsletter {
+				background-color: #6B8E23;
+				padding: 4rem 2rem;
+				color: white;
+				text-align: center;
+				border-radius: 8px;
+				margin: 4rem 0;
+			}
+
+			.newsletter h2 {
+				margin-top: 0;
+			}
+
+			.newsletter-form {
+				display: flex;
+				max-width: 500px;
+				margin: 2rem auto 0;
+			}
+
+			.newsletter-input {
+				flex-grow: 1;
+				padding: 1rem;
+				border: none;
+				border-radius: 4px 0 0 4px;
+				font-size: 1rem;
+			}
+
+			.newsletter-btn {
+				padding: 1rem 1.5rem;
+				background-color: rgb(var(--black));
+				color: white;
+				border: none;
+				border-radius: 0 4px 4px 0;
+				font-weight: bold;
+				cursor: pointer;
+			}
+
+			/* Responsive adjustments */
+			@media (max-width: 900px) {
+				.hero-title {
+					font-size: 2.8rem;
+				}
+				
+				.about-teaser {
+					grid-template-columns: 1fr;
+					gap: 2rem;
+				}
+			}
+
+			@media (max-width: 600px) {
+				.hero-title {
+					font-size: 2.2rem;
+				}
+				
+				.hero-subtitle {
+					font-size: 1.2rem;
+				}
+				
+				.hero-buttons {
+					flex-direction: column;
+					align-items: center;
+				}
+				
+				.newsletter-form {
+					flex-direction: column;
+					gap: 1rem;
+				}
+				
+				.newsletter-input, .newsletter-btn {
+					border-radius: 4px;
+				}
+			}
+
+			.post-image-placeholder {
+				width: 100%;
+				height: 4px;
+				background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<!-- Hero Section -->
+			<section class="hero-section">
+				<div class="hero-pattern"></div>
+				<div class="hero-content">
+					<h1 class="hero-title">Welcome to Tom's Blog</h1>
+					<p class="hero-subtitle">
+						分享AI前沿与商业思考，和同频的人连接
+					</p>
+					<div class="hero-buttons">
+						<a href="/blog" class="hero-btn btn-primary">Read My Blogs</a>
+						<a href="/about" class="hero-btn btn-secondary">About Me</a>
+					</div>
+				</div>
+			</section>
+
+			<!-- Featured Posts Section -->
+			<h2 class="section-title">Latest Articles</h2>
+			<p class="section-subtitle">最近的一些博客</p>
+			<div class="featured-posts">
+				{
+					posts.map((post) => (
+						<article class="post-card">
+							<a href={`/blog/${post.slug}/`}>
+								<div class="post-image-placeholder"></div>
+								<div class="post-content">
+									<h3 class="post-title">{post.data.title}</h3>
+									<span class="post-date">
+										<FormattedDate date={post.data.pubDate} />
+									</span>
+									{post.data.description && (
+										<p class="post-excerpt">{post.data.description}</p>
+									)}
+									<span class="read-more">Read More →</span>
+								</div>
+							</a>
+						</article>
+					))
+				}
+			</div>
+			<a href="/blog" class="view-all">查看全部博客</a>
+
+			<!-- Categories Section -->
+			<section class="categories-section">
+				<h2 class="section-title">Browse by Category</h2>
+				<p class="section-subtitle">看一些你感兴趣的类别</p>
+				<div class="categories-grid">
+					{categories.map(category => (
+						<a href={`/blog/category/${category.slug}/`} class="category-card">
+							<div class="category-icon">
+								{/* Different emoji based on category name */}
+								{category.slug === '科技' && '💻'}
+								{category.slug === '个人成长' && '🌱'}
+								{category.slug === '商业' && '💡'}
+								{!['科技', '个人成长', '商业'].includes(category.slug) && '📝'}
+							</div>
+							<div class="category-name">{category.name}</div>
+							<div class="category-count">
+								{category.count} {category.count === 1 ? 'article' : 'articles'}
+							</div>
+						</a>
+					))}
+				</div>
+			</section>
+
+			<!-- About Me Teaser -->
+			<section class="about-teaser">
+				<h2 class="about-title">你好, 我是Tom</h2>
+				<div class="about-main">
+					<div class="about-image">
+						<img src="/tom_portrait.jpg" alt="About Me" />
+					</div>
+					<div class="about-desc">
+						<p>
+							🧒<b>我的背景</b>: 18届电子科技大学本科毕业，22届NTU硕士毕业，先后在商汤，字节跳动从事AI算法工作，目前在MetaGPT团队做Agent算法研究<br>
+							🌠<b>我的想法</b>: 我现在想在 "释放人类创造力" 的路上，做点有意思的事情，走在这条路上的根本原因是 "创造力受限" 就是我自己的痛点，有很多想法却被各种门槛卡住，我想改善这个现状<br>
+						</p>
+						</div>
+				</div>
+				<div class="about-bottom">
+					<p>
+						在这里我想做一些知识分享，同时记录一些自己的思考，很高兴与你相遇
+					</p>
+					<a href="/about" class="read-more">Learn more about me →</a>
+				</div>
+				
+			</section>
+
+			<!-- Newsletter Section -->
+			<section class="newsletter">
+				<h2>订阅我的博客频道</h2>
+				<p>当我发布新文章时接收通知。(该功能暂未实现)</p>
+				<form class="newsletter-form">
+					<input 
+						type="email" 
+						placeholder="你的邮箱地址" 
+						class="newsletter-input" 
+						required
+					/>
+					<button type="submit" class="newsletter-btn">订阅</button>
+				</form>
+			</section>
+		</main>
+		<Footer />
+
+		<script>
+			// Newsletter form handling
+			document.querySelector('.newsletter-form')?.addEventListener('submit', function(e) {
+				e.preventDefault();
+				const email = this.querySelector('input[type="email"]').value;
+				
+				// In a real app, this would send the email to your server for processing
+				console.log('Newsletter subscription:', email);
+				
+				// Show feedback to user
+				alert('谢谢你的订阅！');
+				
+				// Reset the form
+				this.reset();
+			});
+		</script>
+	</body>
+</html>
