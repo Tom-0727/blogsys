@@ -53,9 +53,23 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }), {
       status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
-    response.headers.set('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict`);
+    // 设置更兼容的cookie策略
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = [
+      `token=${token}`,
+      'HttpOnly',
+      'Path=/',
+      'Max-Age=86400',
+      isProduction ? 'Secure' : '',
+      'SameSite=Lax', // 改为Lax以提高兼容性
+    ].filter(Boolean).join('; ');
+
+    response.headers.set('Set-Cookie', cookieOptions);
 
     return response;
   } catch (error) {
