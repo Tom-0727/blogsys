@@ -11,23 +11,15 @@ import { getCollection } from 'astro:content';
 
 export const prerender = false;
 
-export async function getStaticPaths() {
-  const categories = await getAllCategories();
-  
-  return categories.map((category) => ({
-    params: { category: category.slug },
-    props: { categoryName: category.name }
-  }));
-}
-
 const { category } = Astro.params;
-const { categoryName } = Astro.props;
+
+// Get category name from the category slug
+const allCategories = await getAllCategories();
+const currentCategory = allCategories.find(cat => cat.slug === category);
+const categoryName = currentCategory?.name || 'Unknown Category';
 
 // Get posts for this category
 const posts = await getPostsByCategory(category || 'all');
-
-// Get all categories for the sidebar
-const allCategories = await getAllCategories();
 ---
 
 <!doctype html>
