@@ -3,7 +3,6 @@ title: '2023 Web Development Trends You Should Know'
 description: 'Exploring the most important web development technologies and practices that are shaping the industry this year'
 pubDate: '2023-06-15'
 updatedDate: '2023-07-10'
-heroImage: '/blog-placeholder-3.jpg'
 categories: ['Tech']
 ---
 

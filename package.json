@@ -12,10 +12,11 @@
     "lint": "astro check"
   },
   "dependencies": {
-    "@astrojs/mdx": "^3.1.7",
+    "@astrojs/mdx": "^4.3.0",
+    "@astrojs/node": "^9.2.2",
     "@astrojs/rss": "^4.0.7",
     "@astrojs/sitemap": "^3.2.0",
-    "astro": "^4.15.11",
+    "astro": "^5.9.2",
     "bcrypt": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.0",
