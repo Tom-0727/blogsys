@@ -1,0 +1,6 @@
+node_modules
+.git
+.astro
+*.md
+db_view.ipynb
+.gitignore 
