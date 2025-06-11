@@ -3,7 +3,7 @@ title: 'Building Professional Influence Through Personal Branding'
 description: 'How to establish yourself as a thought leader and expand your professional network through strategic personal branding'
 pubDate: '2023-05-20'
 updatedDate: '2023-06-18'
-heroImage: '/blog-placeholder-about.jpg'
+heroImage: '/blog-placeholder-latest.jpg'
 categories: ['Insights']
 ---
 
