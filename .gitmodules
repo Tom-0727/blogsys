@@ -1,0 +1,3 @@
+[submodule "src/content/tom_blogs"]
+	path = src/content/tom_blogs
+	url = https://github.com/Tom-0727/tom_blogs.git
