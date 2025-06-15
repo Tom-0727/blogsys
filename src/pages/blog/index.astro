@@ -10,7 +10,7 @@ import { getAllCategories } from '../../utils/categoryUtils';
 export const prerender = false;
 
 // Get all blog posts
-const posts = (await getCollection('blog')).sort(
+const posts = (await getCollection('tom_blogs')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 
@@ -267,7 +267,7 @@ function getColumnIndex(index: number, numColumns: number): number {
             {posts.length > 0 && (
               <div class="featured-post">
                 <article class="post-card">
-                  <a href={`/blog/${posts[0].slug}/`}>
+                  <a href={`/blog/${posts[0].id}/`}>
                     <div class="post-image-container">
                       <img 
                         src={posts[0].data.heroImage || '/blog-placeholder-latest.jpg'} 
@@ -278,7 +278,7 @@ function getColumnIndex(index: number, numColumns: number): number {
                   </a>
                   <div class="post-content">
                     <span class="featured-tag">Featured</span>
-                    <a href={`/blog/${posts[0].slug}/`}>
+                    <a href={`/blog/${posts[0].id}/`}>
                       <h2 class="post-title">{posts[0].data.title}</h2>
                       <span class="post-date">
                         <FormattedDate date={posts[0].data.pubDate} />
@@ -308,7 +308,7 @@ function getColumnIndex(index: number, numColumns: number): number {
                     .filter((_, index) => getColumnIndex(index, 3) === columnIndex)
                     .map(post => (
                       <article class="post-card">
-                        <a href={`/blog/${post.slug}/`}>
+                        <a href={`/blog/${post.id}/`}>
                           <div class="post-image-placeholder"></div>
                           <div class="post-content">
                             <h2 class="post-title">{post.data.title}</h2>

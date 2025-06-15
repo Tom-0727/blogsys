@@ -38,7 +38,7 @@ export function formatCategoryName(categorySlug: string): string {
  * @returns Array of category objects with name and count
  */
 export async function getAllCategories() {
-  const posts = await getCollection('blog');
+  const posts = await getCollection('tom_blogs');
   const categoriesMap = new Map<string, number>();
   
   // Add 'All Posts' category
@@ -92,7 +92,7 @@ export async function getAllCategories() {
  * @returns Array of posts in the specified category
  */
 export async function getPostsByCategory(category: string) {
-  const allPosts = await getCollection('blog');
+  const allPosts = await getCollection('tom_blogs');
   
   // If category is 'all' or 'all-posts', return all posts
   if (category === 'all' || category === 'all-posts') {
@@ -130,11 +130,11 @@ export async function getPostsByCategory(category: string) {
  * @returns Array of related posts
  */
 export async function getRelatedPosts(currentSlug: string, categories: string[] = [], limit: number = 3) {
-  const allPosts = await getCollection('blog');
+  const allPosts = await getCollection('tom_blogs');
   
   // Filter out the current post and find posts with matching categories
   const related = allPosts
-    .filter(post => post.slug !== currentSlug)
+    .filter(post => post.id !== currentSlug)
     .map(post => {
       // Only use categories from frontmatter
       const postCategories = post.data.categories || [];

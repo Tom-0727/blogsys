@@ -2,26 +2,75 @@
 // src/pages/blog/[...slug].astro - Dynamic route handler for blog posts
 import { type CollectionEntry, getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
+import { marked } from 'marked';
 
 export const prerender = false;
 
 // 动态获取博客文章
 const { slug } = Astro.params;
-const posts = await getCollection('blog');
-const post = posts.find(p => p.slug === slug);
+const posts = await getCollection('tom_blogs');
+const post = posts.find(p => p.id === slug);
 
 if (!post) {
   return Astro.redirect('/404');
 }
 
-// Get rendered content and headings for table of contents
-const { Content, headings } = await post.render();
+// 手动处理markdown内容和提取headings
+let contentHtml = '';
+let headings: { depth: number; slug: string; text: string }[] = [];
+
+if (post.body) {
+  // 从markdown body中提取headings，使用更严格的正则表达式
+  const headingMatches = Array.from(post.body.matchAll(/^(#{1,6})\s+(.+)$/gm));
+
+  if (headingMatches.length > 0) {
+    headings = headingMatches.map((match) => {
+      const level = match[1].length; // 直接使用匹配的#数量
+      const text = match[2].trim(); // 获取标题文本并去除前后空格
+      const slug = text.toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\u4e00-\u9fa5-]/g, '') // 支持中文
+        .replace(/^-+|-+$/g, '');
+      
+      return {
+        depth: level,
+        slug: slug,
+        text: text
+      };
+    });
+  }
+
+  // 配置marked，添加自定义渲染器为标题生成id
+  const renderer = new marked.Renderer();
+  renderer.heading = function({ tokens, depth }) {
+    const text = this.parser.parseInline(tokens);
+    // 查找对应的heading数据
+    const heading = headings.find(h => h.text === text && h.depth === depth);
+    const id = heading ? heading.slug : text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '').replace(/^-+|-+$/g, '');
+    return `<h${depth} id="${id}">${text}</h${depth}>`;
+  };
+  
+  // 自定义blockquote渲染器，让引用部分字体变小
+  renderer.blockquote = function({ tokens }) {
+    const body = this.parser.parse(tokens);
+    return `<blockquote style="font-size: 0.9em; opacity: 0.8;">${body}</blockquote>`;
+  };
+
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+    renderer: renderer
+  });
+  
+  // 渲染markdown为HTML
+  contentHtml = await marked(post.body);
+}
 ---
 
 <BlogPost 
   {...post.data}
-  slug={post.slug}
+  slug={post.id}
   headings={headings}
 >
-  <Content />
+  <div set:html={contentHtml} />
 </BlogPost>

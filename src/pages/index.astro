@@ -11,7 +11,7 @@ import Layout from '../layouts/BlogPost.astro';
 export const prerender = false;
 
 // Get latest posts for the featured section
-const posts = (await getCollection('blog'))
+const posts = (await getCollection('tom_blogs'))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
 	.slice(0, 4);
 
@@ -407,7 +407,7 @@ const categories = await getAllCategories();
 				{
 					posts.map((post) => (
 						<article class="post-card">
-							<a href={`/blog/${post.slug}/`}>
+							<a href={`/blog/${post.id}/`}>
 								<div class="post-image-placeholder"></div>
 								<div class="post-content">
 									<h3 class="post-title">{post.data.title}</h3>

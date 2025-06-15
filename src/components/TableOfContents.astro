@@ -11,8 +11,8 @@ export interface Props {
 // Convert headings to hierarchical structure
 const { headings } = Astro.props;
 
-// Filter out any headings with a depth lower than 2 (h1 is usually the post title)
-const filteredHeadings = headings.filter(heading => heading.depth >= 2);
+// 不过滤任何标题，保留完整的层级结构
+const filteredHeadings = headings;
 
 // Group headings by their depth for hierarchical display
 type Heading = {
@@ -23,32 +23,47 @@ type Heading = {
 };
 
 function buildTOC(headings: Heading[]): Heading[] {
+  if (headings.length === 0) return [];
+  
   const toc: Heading[] = [];
   const parentHeadings: Record<number, Heading> = {};
+  
+  // 找到最小的深度作为顶级标题
+  const minDepth = Math.min(...headings.map(h => h.depth));
 
   headings.forEach(heading => {
     const { depth } = heading;
     
-    if (depth === 2) {
-      // Top level heading
+    if (depth === minDepth) {
+      // 顶级标题（使用最小深度）
       const newHeading = { ...heading, subheadings: [] };
-      parentHeadings[2] = newHeading;
+      parentHeadings[depth] = newHeading;
       toc.push(newHeading);
     } else {
-      // Subheading - find its parent
-      const parentDepth = depth - 1;
+      // 子标题 - 寻找最近的父级标题
+      let parentDepth = depth - 1;
       let currentParent = parentHeadings[parentDepth];
       
+      // 如果找不到直接父级，尝试寻找更浅层的父级
+      while (!currentParent && parentDepth >= minDepth) {
+        parentDepth--;
+        currentParent = parentHeadings[parentDepth];
+      }
+      
       if (currentParent) {
-        // Create new heading with empty subheadings array
+        // 创建新标题并添加到父级的子标题中
         const newHeading = { ...heading, subheadings: [] };
-        // Add to parent's subheadings
         if (!currentParent.subheadings) {
           currentParent.subheadings = [];
         }
         currentParent.subheadings.push(newHeading);
-        // This heading might be a parent to future headings
+        // 这个标题可能是未来标题的父级
         parentHeadings[depth] = newHeading;
+      } else {
+        // 如果找不到父级，就作为顶级标题
+        const newHeading = { ...heading, subheadings: [] };
+        parentHeadings[depth] = newHeading;
+        toc.push(newHeading);
       }
     }
   });

@@ -208,18 +208,18 @@ const posts = await getPostsByCategory(category || 'all');
           <div class="posts-grid">
             {posts.map(post => (
               <article class="post-card">
-                <a href={`/blog/${post.slug}/`}>
+                <a href={`/blog/${post.id}/`}>
                   <div class="post-image-placeholder"></div>
                 </a>
                 <div class="post-content">
                   <h2 class="post-title">
-                    <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
+                    <a href={`/blog/${post.id}/`}>{post.data.title}</a>
                   </h2>
                   <div class="post-date">
                     <FormattedDate date={post.data.pubDate} />
                   </div>
                   <p class="post-excerpt">{post.data.description}</p>
-                  <a href={`/blog/${post.slug}/`} class="read-more">
+                  <a href={`/blog/${post.id}/`} class="read-more">
                     Read more
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="5" y1="12" x2="19" y2="12"></line>
