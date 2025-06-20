@@ -435,9 +435,9 @@ const categories = await getAllCategories();
 						<a href={`/blog/category/${category.slug}/`} class="category-card">
 							<div class="category-icon">
 								{/* Different emoji based on category name */}
-								{category.slug === '科技' && '💻'}
-								{category.slug === '个人成长' && '🌱'}
-								{category.slug === '商业' && '💡'}
+								{category.slug === 'WeekTech' && '💻'}
+								{category.slug === 'tmp' && '🌱'}
+								{category.slug === 'Insights' && '💡'}
 								{!['科技', '个人成长', '商业'].includes(category.slug) && '📝'}
 							</div>
 							<div class="category-name">{category.name}</div>
